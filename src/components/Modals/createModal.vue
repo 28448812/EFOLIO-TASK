@@ -4,7 +4,7 @@
             <VForm class="modal-content" ref="kt_modal_create_form" @submit="addNewItem" :validation-schema="NOTE_UPDATE_CREATE">
                 <div class="modal-header">
                     <h5 class="modal-title">New Book <i class="bi bi-clipboard-check-fill"></i></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ref="closeModal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ref="closeModalRef"></button>
                 </div>
                 <div class="modal-body text-start">
                     <div class="mb-3">
@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @click="closeModal" :disabled="awaitProccess">Close</button>
+                    <button type="button" class="btn btn-secondary" @click="closeModalHandler" :disabled="awaitProccess">Close</button>
                     <button type="button" class="btn btn-loading" disabled v-if="awaitProccess">
                         <div class="spinner-border" style="width: 1rem; height: 1rem; border-width: 2px;" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -40,75 +40,78 @@
     </div>
 </template>
 
-<script lang="js">
+<script setup lang="js">
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
-import { useDashboardStore } from "@/stores/dashboard.js"
+import { useDashboardStore } from "@/stores/dashboard.js";
 import ToastHelper from "@/config/ToastHelper.js";
-import { NOTE_UPDATE_CREATE } from "@/helpers/schemas.js"
+import { NOTE_UPDATE_CREATE } from "@/helpers/schemas.js";
+import { ref, watch, defineEmits } from 'vue';
 
-export default {
-    components: {
-        ErrorMessage,
-        Field,
-        VForm
-    },
-    data() {
-        return {
-            description: '',
-            awaitProccess: false,
-        }
-    },
-    setup() {
-        const store = useDashboardStore()
+const store = useDashboardStore();
 
-        return {
-            store,
-            NOTE_UPDATE_CREATE,
-        }
-    },
-    methods: {
-        async addNewItem(values) {
-            this.awaitProccess = true;
+// events
+const emit = defineEmits(['itemAdded']);
 
-            await this.store.addNewItem(values);
+// data
+const description = ref('');
+const awaitProccess = ref(false);
 
-            this.awaitProccess = false;
-            if (this.store.error.length > 0) {
-                ToastHelper.error(this.store.error[0])
-                return;
-            }
+// refs
+const closeModalRef = ref(null);
+const titleInput = ref(null);
+const kt_modal_create_form = ref(null);
+const qlEditorRef = ref(null);
 
-            ToastHelper.success('Added with sucessful');
-            this.closeModal();
-        },
-        setEditorRef(emit) {
-            this.qlEditorRef = emit
-        },
-        clearForm() {
-            this.description = '';
-            this.$refs['titleInput'].value = '';
+// methods
+async function addNewItem(values) {
+    awaitProccess.value = true;
 
-            // clear quill editor
-            // document.querySelector('.ql-editor').innerHTML = '';
-        },
-        async closeModal() {
-            this.clearForm();
-            this.$refs['closeModal'].click();
-            await this.$parent.getAll();
+    await store.addNewItem(values);
 
-            this.$refs['kt_modal_create_form'].resetForm();
-        }
-    },
-    watch: {
-        'description': {
-            handler(newVal) {
-                if (newVal === '<p><br></p>') {
-                    this.description = ''
-                }
-            }
-        }
+    awaitProccess.value = false;
+    if (store.error.length > 0) {
+        ToastHelper.error(store.error[0]);
+        return;
+    }
+
+    ToastHelper.success('Added with sucessful');
+    closeModalHandler();
+}
+
+function setEditorRef(emit) {
+    qlEditorRef.value = emit;
+}
+
+function clearForm() {
+    description.value = '';
+    if (titleInput.value) {
+        titleInput.value.value = '';
+    }
+
+    // clear quill editor
+    // document.querySelector('.ql-editor').innerHTML = '';
+}
+
+async function closeModalHandler() {
+    clearForm();
+    if (closeModalRef.value) {
+        closeModalRef.value.click();
+    }
+    
+    // update list
+    emit('itemAdded');
+
+    if (kt_modal_create_form.value) {
+        kt_modal_create_form.value.resetForm();
     }
 }
+
+// watch
+watch(description, (newVal) => {
+    if (newVal === '<p><br></p>') {
+        description.value = '';
+    }
+});
 </script>
 
 <style scoped>
@@ -212,14 +215,5 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.text-danger {
-    color: #e74c3c !important;
-    font-size: 13px !important;
-}
-
-.fv-help-block {
-    margin-top: 5px !important;
 }
 </style>

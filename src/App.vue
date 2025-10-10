@@ -5,17 +5,8 @@
   </ul> -->
 </template>
 
-<script lang="js">
+<script setup lang="js">
 import defautLayout from '@/components/layouts/default.vue'
 
-export default {
-  components: { defautLayout },
-  setup() {
-    const CIRCLES_AMOUNT = 10;
-
-    return {
-      CIRCLES_AMOUNT,
-    }
-  },
-}
+const CIRCLES_AMOUNT = 10;
 </script>

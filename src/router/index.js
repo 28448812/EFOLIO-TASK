@@ -4,6 +4,9 @@ import { getToken } from '@/config/services/token'
 export const ROUTE_SIGNIN = 'sign-in'
 export const ROUTE_SIGNUP = 'sign-up'
 export const ROUTE_DASHBOARD = 'notepad'
+export const ROUTE_WEATHER = 'weather'
+export const ROUTE_CountBookAPI = 'CountBookAPI'
+export const ROUTE_GetBookCount = 'GetBookCount'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +34,33 @@ const router = createRouter({
             path: '/',
             name: ROUTE_DASHBOARD,
             component: () => import('@/views/Dashboard.vue'),
+            meta: {
+                title: '',
+                requiresAuth: true
+            }
+        },
+        {
+            path: '/weather',
+            name: ROUTE_WEATHER,
+            component: () => import('@/views/Weather.vue'),
+            meta: {
+                title: '',
+                requiresAuth: true
+            }
+        },
+        {
+            path: '/CountBookAPI',
+            name: ROUTE_CountBookAPI,
+            component: () => import('@/views/CountBookAPI.vue'),
+            meta: {
+                title: '',
+                requiresAuth: true
+            }
+        },
+        {
+            path: '/GetBookCount',
+            name: ROUTE_GetBookCount,
+            component: () => import('@/views/GetBookCount.vue'),
             meta: {
                 title: '',
                 requiresAuth: true

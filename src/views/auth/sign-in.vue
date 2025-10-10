@@ -42,57 +42,39 @@
                 </div>
             </VForm>
             <div class="auth-footer">
-                <p>&copy; 2025 Library Management System - All Rights Reserved</p>
+                 <p>&copy; 2025 Library Management System - All Rights Reserved</p>
             </div>
         </div>
     </div>
 </template>
 
-<script>
+<script setup lang="js">
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import { ROUTE_SIGNUP, ROUTE_DASHBOARD } from "@/router/index.js";
 import { SIGNIN } from "@/helpers/schemas";
 import { useAuthStore } from "@/stores/auth.js";
 import ToastHelper from '@/config/ToastHelper';
+import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 
-export default {
-    name: 'sign-in',
-    components: {
-        VForm,
-        ErrorMessage,
-        Field,
-    },
-    data() {
-        return {
-            awaitRequest: false
-        }
-    },
-    setup() {
-        const store = useAuthStore();
+const router = useRouter();
+const store = useAuthStore();
+const awaitRequest = ref(false);
 
-        return {
-            ROUTE_SIGNUP,
-            SIGNIN,
-            store,
-        }
-    },
-    methods: {
-        async signIn(values) {
-            this.awaitRequest = true;
+async function signIn(values) {
+    awaitRequest.value = true;
 
-            await this.store.signIn(values);
-            let { error, user } = this.store;
+    await store.signIn(values);
+    let { error, user } = store;
 
-            this.awaitRequest = false;
-            if (error.length > 0) {
-                ToastHelper.error(error[0])
-                return;
-            }
-            localStorage.setItem('userName',user.data.name)
-            ToastHelper.success(`Welcome Sr(a). ${user.data.name}`)
-            this.$router.push({ name: ROUTE_DASHBOARD });
-        }
-    },
+    awaitRequest.value = false;
+    if (error.length > 0) {
+        ToastHelper.error(error[0]);
+        return;
+    }
+    localStorage.setItem('userName', user.data.name);
+    ToastHelper.success(`Welcome Sr(a). ${user.data.name}`);
+    router.push({ name: ROUTE_DASHBOARD });
 }
 </script>
 

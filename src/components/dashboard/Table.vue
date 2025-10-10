@@ -1,6 +1,6 @@
 <template>
     <div class="dashboard-table-container">
-        <createModal />
+        <createModal @item-added="handleItemAdded" />
         <nav class="navbar">
             <input type="text" class="form-control input-search" placeholder="Search" v-model="search" @keypress.enter="searchItem">
             <button type="button" class="btn btn-secondary" style="padding: 5px 15px !important;" disabled v-if="awaitRequest">
@@ -51,7 +51,7 @@
     <!-- <button @click="add" class="btn btn-primary">add</button> -->
 </template>
 
-<script lang="js">
+<script setup lang="js">
 import { useDashboardStore } from "@/stores/dashboard.js"
 import { convertDate } from '@/helpers/utils.js'
 import createModal from "@/components/Modals/createModal.vue"
@@ -68,93 +68,91 @@ import {
     addDoc
 } from 'firebase/firestore'
 import firebase from '@/config/services/firebase.js'
-export default {
-    components: { createModal },
-    data() {
-        return {
-            items: [],
-            oldItems: [],
-            tableHeader: [
-                { text: '#', class: 'fw-bold' },
-                { text: 'Title', class: '' },
-                { text: 'Description ', class: '' },
-                { text: 'Created At', class: '' },
-                // { text: 'Action', class: '' },
-            ],
-            headerClass: '',
-            forModal: {},
-            awaitRequest: false,
-            search: ''
-        }
-    },
-    setup() {
-        const store = useDashboardStore();
+import { ref, onMounted, watch } from 'vue'
 
-        return {
-            store,
-            convertDate
-        }
-    },
-    methods: {
-        async add() {
-            let data = {
-                title: 'New Note',
-                description: 'This is a new note',
-                createdAt: new Date(),
-                userId: 1
-            };
+const store = useDashboardStore();
 
-            await addDoc(collection(firebase, 'abc'), data);
-        },
-        onScroll(event) {
-            if (event.target.scrollTop > 0) {
-                this.headerClass = 'sticky-scroll';
-                return
-            }
-            this.headerClass = '';
-        },
-        async getAll() {
-            this.awaitRequest = true;
-            await this.store.getAll();
-            let { error, list } = this.store;
+//data
+const items = ref([]);
+const oldItems = ref([]);
+const tableHeader = [
+    { text: '#', class: 'fw-bold' },
+    { text: 'Title', class: '' },
+    { text: 'Description ', class: '' },
+    { text: 'Created At', class: '' },
+    // { text: 'Action', class: '' },
+];
+const headerClass = ref('');
+const forModal = ref({});
+const awaitRequest = ref(false);
+const search = ref('');
 
-            this.awaitRequest = false;
-            if (error.length > 0) {
-                ToastHelper.error(error[0]);
-                return;
-            }
+// methods
+async function add() {
+    let data = {
+        title: 'New Note',
+        description: 'This is a new note',
+        createdAt: new Date(),
+        userId: 1
+    };
 
-            this.items = list;
-            this.oldItems = list;
-        },
-        setModalData(data) {
-            this.forModal = data;
-        },
-        searchItem() {
-            if (this.search == '') {
-                this.items = this.oldItems;
-                return;
-            }
-
-            let search = this.search.toLowerCase();
-            this.items = this.oldItems.filter(
-                ({ title }) => title.toLowerCase().includes(search)
-            )
-        }
-    },
-    async mounted() {
-        await this.getAll()
-
-        this.oldItems = this.items;
-    },
-    watch: {
-        'search': {
-            handler(newVal) {
-                this.searchItem();
-            }
-        }
-    }
+    await addDoc(collection(firebase, 'abc'), data);
 }
+
+function onScroll(event) {
+    if (event.target.scrollTop > 0) {
+        headerClass.value = 'sticky-scroll';
+        return;
+    }
+    headerClass.value = '';
+}
+
+async function getAll() {
+    awaitRequest.value = true;
+    await store.getAll();
+    let { error, list } = store;
+
+    awaitRequest.value = false;
+    if (error.length > 0) {
+        ToastHelper.error(error[0]);
+        return;
+    }
+
+    items.value = list;
+    oldItems.value = list;
+}
+
+function setModalData(data) {
+    forModal.value = data;
+}
+
+function searchItem() {
+    if (search.value == '') {
+        items.value = oldItems.value;
+        return;
+    }
+
+    let searchText = search.value.toLowerCase();
+    items.value = oldItems.value.filter(
+        ({ title }) => title.toLowerCase().includes(searchText)
+    );
+}
+
+// life cycle
+onMounted(async () => {
+    await getAll();
+    oldItems.value = items.value;
+});
+
+// watch
+watch(search, () => {
+    searchItem();
+});
+
+// event
+async function handleItemAdded() {
+    await getAll();
+};
 </script>
 
 <style scoped>

@@ -4,20 +4,12 @@
     </button>
 </template>
 
-<script>
+<script setup lang="js">
 import { useAuthStore } from "@/stores/auth.js"
 
-export default {
-    setup() {
-        const store = useAuthStore();
-        const logout = () => {
-            store.purgeAuth();
-        }
-
-        return {
-            logout
-        }
-    }
+const store = useAuthStore();
+const logout = () => {
+    store.purgeAuth();
 }
 </script>
 

@@ -71,53 +71,35 @@
     </div>
 </template>
 
-<script lang="js">
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import { ROUTE_SIGNIN, ROUTE_DASHBOARD } from "@/router/index.js";
 import { SIGNUP } from "@/helpers/schemas";
 import { useAuthStore } from "@/stores/auth.js";
 import ToastHelper from '@/config/ToastHelper';
 
-export default {
-    components: {
-        VForm,
-        ErrorMessage,
-        Field,
-    },
-    setup() {
-        const store = useAuthStore();
+const router = useRouter();
+const store = useAuthStore();
+const awaitRequest = ref(false);
 
-        return {
-            ROUTE_SIGNIN,
-            SIGNUP,
-            store,
-            ToastHelper
-        }
-    },
-    data() {
-        return {
-            awaitRequest: false
-        }
-    },
-    methods: {
-        async signUp(values) {
-            this.awaitRequest = true;
+const signUp = async (values) => {
+    awaitRequest.value = true;
 
-            await this.store.signUp(values);
-            const { error, user } = this.store;
+    await store.signUp(values);
+    const { error, user } = store;
 
-            this.awaitRequest = false;
-            if (error.length > 0) {
-                ToastHelper.error(error[0])
-                return;
-            }
-
-            ToastHelper.success(`Welcome Sr(a). ${user.data.name}`);
-            localStorage.setItem('userName',user.data.name)
-            this.$router.push({ name: ROUTE_DASHBOARD });
-        }
+    awaitRequest.value = false;
+    if (error.length > 0) {
+        ToastHelper.error(error[0]);
+        return;
     }
-}
+
+    ToastHelper.success(`Welcome Sr(a). ${user.data.name}`);
+    localStorage.setItem('userName', user.data.name);
+    router.push({ name: ROUTE_DASHBOARD });
+};
 </script>
 
 <style scoped>
